@@ -34,11 +34,14 @@ app.post('/api/checkout', async (req, res) => {
       : '';
 
     // 1. ส่งข้อมูลสลิปไปตรวจสอบที่ SlipOK API
-    const slipokResponse = await fetch(`https://api.slipok.com/api/line/apikey/${process.env.SLIPOK_BRANCH_ID}`, {
+    const branchId = (process.env.SLIPOK_BRANCH_ID || '').trim();
+    const apiKey = (process.env.SLIPOK_API_KEY || '').trim();
+
+    const slipokResponse = await fetch(`https://api.slipok.com/api/line/apikey/${branchId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.SLIPOK_API_KEY
+        'x-api-key': apiKey
       },
       body: JSON.stringify({
         data: base64Data,
