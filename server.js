@@ -54,10 +54,8 @@ app.post('/api/checkout', async (req, res) => {
     const slipResult = await slipokResponse.json();
     console.log('SlipOK response:', JSON.stringify(slipResult, null, 2));
 
-    // ตรวจสอบว่าสลิปถูกต้อง หรือเป็นสลิปซ้ำ (1012) เฉพาะช่วงทดสอบ
-    const isValidSlip = Boolean(slipResult.success) || slipResult.code === 1012;
-
-    if (!isValidSlip) {
+    // ตรวจสอบว่าสลิปถูกต้องตามเงื่อนไขของ SlipOK หรือไม่
+    if (!slipResult.success) {
       return res.status(400).json({
         success: false,
         message: slipResult.message || 'สลิปไม่ถูกต้อง หรือตรวจสอบไม่ผ่าน',
@@ -72,9 +70,7 @@ app.post('/api/checkout', async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: slipResult.code === 1012
-        ? 'บันทึกคำสั่งซื้อสำเร็จ (โหมดทดสอบอนุญาตสลิปซ้ำ)'
-        : 'ตรวจสอบสลิปและบันทึกคำสั่งซื้อสำเร็จ',
+      message: 'ตรวจสอบสลิปและบันทึกคำสั่งซื้อสำเร็จ',
       slipData: slipResult.data,
       order: dbResult.rows[0]
     });
