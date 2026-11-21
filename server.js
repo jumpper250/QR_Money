@@ -1,20 +1,22 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { Pool } = require('pg');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(cors());
 
 // ตั้งค่าเชื่อมต่อ Database จาก Supabase
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-// ทดสอบหน้าแรกของ Server
+// แสดงหน้าเว็บ index.html เมื่อเข้าหน้าแรก
 app.get('/', (req, res) => {
-  res.send('JumpBear Shop Backend is running!');
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // API สำหรับตรวจสอบสลิปและบันทึกออร์เดอร์
@@ -42,13 +44,13 @@ app.post('/api/checkout', async (req, res) => {
       return res.status(400).json({ success: false, message: 'สลิปไม่ถูกต้อง หรือตรวจสอบไม่ผ่าน', detail: slipResult });
     }
 
-    // 2. ถ้าสลิปผ่าน บันทึกข้อมูลลงฐานข้อมูล Supabase (ตัวอย่างการinsert)
+    // 2. ถ้าสลิปผ่าน บันทึกข้อมูลลงฐานข้อมูล Supabase
     const query = 'INSERT INTO orders (customer_name, amount, status) VALUES ($1, $2, $3) RETURNING *';
     const values = [customer_name, amount, 'PAID'];
     const dbResult = await pool.query(query, values);
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: 'ตรวจสอบสลิปและบันทึกคำสั่งซื้อสำเร็จ',
       slipData: slipResult.data,
       order: dbResult.rows[0]
