@@ -38,6 +38,7 @@ app.post('/api/checkout', async (req, res) => {
     });
 
     const slipResult = await slipokResponse.json();
+    console.log('SlipOK response:', JSON.stringify(slipResult, null, 2));
 
     // ตรวจสอบว่าสลิปถูกต้องตามเงื่อนไขของ SlipOK หรือไม่
     if (!slipResult.success) {
