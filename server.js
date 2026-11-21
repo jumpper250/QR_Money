@@ -36,6 +36,7 @@ app.post('/api/checkout', async (req, res) => {
     // 1. ส่งข้อมูลสลิปไปตรวจสอบที่ SlipOK API
     const branchId = (process.env.SLIPOK_BRANCH_ID || '').trim();
     const apiKey = (process.env.SLIPOK_API_KEY || '').trim();
+    console.log('CHECK ENV:', { branchId, apiKey });
 
     const slipokResponse = await fetch(`https://api.slipok.com/api/line/apikey/${branchId}`, {
       method: 'POST',
