@@ -24,6 +24,15 @@ app.post('/api/checkout', async (req, res) => {
   try {
     const { customer_name, amount, image_base64 } = req.body;
 
+    if (!image_base64) {
+      return res.status(400).json({ success: false, message: 'ไม่พบข้อมูลรูปภาพสลิป' });
+    }
+
+    // ตัด prefix เช่น "data:image/jpeg;base64," ออกให้เหลือเฉพาะตัว Base64
+    const base64Data = typeof image_base64 === 'string'
+      ? image_base64.replace(/^data:image\/\w+;base64,/, '')
+      : '';
+
     // 1. ส่งข้อมูลสลิปไปตรวจสอบที่ SlipOK API
     const slipokResponse = await fetch(`https://api.slipok.com/api/line/apikey/${process.env.SLIPOK_BRANCH_ID}`, {
       method: 'POST',
@@ -32,8 +41,9 @@ app.post('/api/checkout', async (req, res) => {
         'x-api-key': process.env.SLIPOK_API_KEY
       },
       body: JSON.stringify({
-        image: image_base64,
-        amount: amount
+        data: base64Data,
+        amount: Number(amount),
+        log: true
       })
     });
 
@@ -42,12 +52,16 @@ app.post('/api/checkout', async (req, res) => {
 
     // ตรวจสอบว่าสลิปถูกต้องตามเงื่อนไขของ SlipOK หรือไม่
     if (!slipResult.success) {
-      return res.status(400).json({ success: false, message: 'สลิปไม่ถูกต้อง หรือตรวจสอบไม่ผ่าน', detail: slipResult });
+      return res.status(400).json({
+        success: false,
+        message: slipResult.message || 'สลิปไม่ถูกต้อง หรือตรวจสอบไม่ผ่าน',
+        detail: slipResult
+      });
     }
 
     // 2. ถ้าสลิปผ่าน บันทึกข้อมูลลงฐานข้อมูล Supabase
     const query = 'INSERT INTO orders (customer_name, amount, status) VALUES ($1, $2, $3) RETURNING *';
-    const values = [customer_name, amount, 'PAID'];
+    const values = [customer_name, Number(amount), 'PAID'];
     const dbResult = await pool.query(query, values);
 
     res.status(200).json({
