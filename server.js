@@ -42,11 +42,10 @@ app.post('/api/checkout', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'Authorization': apiKey
+        'x-authorization': apiKey
       },
       body: JSON.stringify({
-        data: base64Data,
+        files: base64Data,
         amount: Number(amount),
         log: true
       })
